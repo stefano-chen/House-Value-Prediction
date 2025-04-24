@@ -3,7 +3,7 @@ A California-based real estate agency has partnered with our software developmen
 to create a machine learning-based that can predict the market value of residential properties. \
 Currently, the agency relies on expert estimations to assess the properties value.\
 These estimations have an average error rate of approximately 20%.\
-To support our work, the real estate agency has provided a historical dataset \
+To support our work, the real estate agency has provided a historical [dataset](https://www.kaggle.com/datasets/fedesoriano/california-housing-prices-data-extra-features) \
 containing various property features along with estimated house values.
 
 # Problem Analysis
