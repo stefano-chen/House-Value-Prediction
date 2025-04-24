@@ -11,3 +11,12 @@ Manual expert-based valuation is time-consuming, subjective, and prone to incons
 With fluctuating market conditions and increasing data availability, there is a growing need\
 for a scalable, consistent, and data-driven approach to property valuation \
 that can outperform the current manual methods.
+
+# Software Requirement Specification
+The Software Requirement Specification (SRS) document can be viewed [here](/docs/srs/Software%20Requirements%20Specification.pdf)
+
+# System Modeling
+* ## UML Use Case Diagram
+    ![UML use case diagram](/docs/uml/usercase.png)
+* ## UML Sequence Diagram
+    ![UML sequence diagram](/docs/uml/sequence.png)
