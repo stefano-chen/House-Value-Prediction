@@ -16,7 +16,7 @@ that can outperform the current manual methods.
 The Software Requirement Specification (SRS) document can be viewed [here](/docs/srs/Software%20Requirements%20Specification.pdf)
 
 # System Modeling
-* ## UML Use Case Diagram
+* **UML Use Case Diagram**
     ![UML use case diagram](/docs/uml/usercase.png)
-* ## UML Sequence Diagram
+* **UML Sequence Diagram**
     ![UML sequence diagram](/docs/uml/sequence.png)
