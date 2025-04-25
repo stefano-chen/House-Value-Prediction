@@ -22,4 +22,4 @@ The Software Requirement Specification (SRS) document can be viewed [here](/docs
     ![UML sequence diagram](/docs/uml/sequence.png)
 
 # Exploratory Data Analysis (EDA)
-The Exploratory Data Analysis can be viewed [here](/eda/House-Value-Prediction-EDA.ipynb)
+The Exploratory Data Analysis can be viewed [here](/notebooks/eda/House-Value-Prediction-EDA.ipynb)
