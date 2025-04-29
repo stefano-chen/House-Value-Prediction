@@ -5,9 +5,10 @@ import pandas as pd
 import numpy as np
 from sklearn.pipeline import Pipeline
 import joblib
+from pathlib import Path
 
-dataset_path = "../dataset/processed/California_Houses_Processed_Train.csv"
-preprocessing_pipeline_path = "../artifacts/preprocessing/preprocessing_pipeline.pkl"
+dataset_path = Path("../dataset/processed/California_Houses_Processed_Train.csv")
+preprocessing_pipeline_path = Path("../artifacts/preprocessing/preprocessing_pipeline.pkl")
 
 houses_df = pd.read_csv(dataset_path)
 houses_df.drop(columns=["Median_House_Value"], inplace=True)
