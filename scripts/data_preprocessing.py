@@ -17,18 +17,3 @@ def get_preprocessing_pipeline():
     ])
 
     return preprocessing_pipeline
-
-
-if __name__ == "__main__":
-    import pandas as pd
-    import joblib
-    from pathlib import Path
-
-    dataset_path = Path("../dataset/processed/California_Houses_Processed_Train.csv")
-    preprocessing_pipeline_path = Path("../artifacts/preprocessing/preprocessing_pipeline.pkl")
-    houses_df = pd.read_csv(dataset_path)
-    houses_df.drop(columns=["Median_House_Value"], inplace=True)
-    preprocessing_pipeline = get_preprocessing_pipeline()
-    preprocessing_pipeline.fit(houses_df)
-    joblib.dump(preprocessing_pipeline, preprocessing_pipeline_path)
-
