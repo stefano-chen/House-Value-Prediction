@@ -66,6 +66,6 @@ def objective(trial):
     return rmse, mae, mape, r2
 
 study = optuna.create_study(directions=["minimize", "minimize", "minimize", "maximize"])
-study.optimize(objective, n_trials=50)
+study.optimize(objective, n_trials=100)
 
 shutil.rmtree(artifact_path)
