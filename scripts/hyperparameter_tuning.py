@@ -57,6 +57,7 @@ def objective(trial):
     experiment.log_metric("rmse", rmse)
     experiment.log_metric("mae", mae)
     experiment.log_metric("mape", mape)
+    experiment.log_metric("r2", r2)
 
     log_model(experiment=experiment, model_name="HVP", model=model)
 
