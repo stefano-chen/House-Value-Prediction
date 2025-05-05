@@ -8,12 +8,9 @@ import pandas as pd
 import numpy as np
 
 def calculate_confidence(model, x):
-    preprocessing = model.named_steps["pipeline"]
-    forest = model.named_steps["randomforestregressor"]
+    X_transformed = model.named_steps["pipeline"].transform(x)
 
-    X_transformed = preprocessing.transform(x)
-
-    tree_preds = np.array([tree.predict(X_transformed) for tree in forest.estimators_])
+    tree_preds = np.array([tree.predict(X_transformed) for tree in model.named_steps["randomforestregressor"].estimators_])
 
     y_pred = tree_preds.mean(axis=0)[0]
     y_std = tree_preds.std(axis=0)[0]
@@ -23,10 +20,8 @@ def calculate_confidence(model, x):
 def download_model():
     comet_ml.login()
 
-    api = comet_ml.API()
-
-    model_registry = api.get_model(
-        workspace=api.get_default_workspace(), model_name="HVP"
+    model_registry = comet_ml.API().get_model(
+        workspace=comet_ml.API().get_default_workspace(), model_name="HVP"
     )
 
     versions = model_registry.find_versions(status="Production")
@@ -35,16 +30,14 @@ def download_model():
         print("No model Found", file=sys.stderr)
         sys.exit(-1)
 
-    latest_version = versions[0]
-
-    model_registry.download(latest_version, output_folder=Path("./backend/model"))
+    model_registry.download(versions[0], output_folder=Path("./backend/model"))
 
     model = joblib.load(Path("./backend/model/model-data/comet-sklearn-model.joblib"))
 
-    return model, latest_version
+    return model, versions[0]
 
 
-def create_app(testing=False):
+def create_app():
 
     model, version = download_model()
 
@@ -56,7 +49,7 @@ def create_app(testing=False):
 
     @app.route("/version", methods=["GET"])
     def get_model_version():
-        return {"version":version}, 200
+        return {"version": version}, 200
 
     @app.route("/predict", methods=["POST"])
     def get_model_prediction():
