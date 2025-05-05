@@ -1,3 +1,5 @@
+import sys
+
 from flask import Flask, request
 import comet_ml
 import joblib
@@ -27,7 +29,13 @@ def download_model():
         workspace=api.get_default_workspace(), model_name="HVP"
     )
 
-    latest_version = model_registry.find_versions(status="Production")[0]
+    versions = model_registry.find_versions(status="Production")
+
+    if len(versions) == 0:
+        print("No model Found", file=sys.stderr)
+        sys.exit(-1)
+
+    latest_version = versions[0]
 
     model_registry.download(latest_version, output_folder=Path("./backend/model"))
 
