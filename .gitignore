@@ -5,4 +5,4 @@ __pycache__
 scripts/__pycache__
 *.env
 ./artifacts
-./backend/model
+./backend/model/

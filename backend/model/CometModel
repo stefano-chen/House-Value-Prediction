@@ -1,1 +1,0 @@
-{"format": "scikit-learn", "comet_sdk_version": "3.49.9", "model_metadata": {"scikit-learn": {"sklearn_version": "1.6.1", "persistence_module": "joblib", "persistence_module_version": "1.4.2", "model_path": "model-data/comet-sklearn-model.joblib"}}}
