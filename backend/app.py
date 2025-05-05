@@ -8,14 +8,11 @@ import pandas as pd
 import numpy as np
 
 def calculate_confidence(model, x):
-    X_transformed = model.named_steps["pipeline"].transform(x)
-
-    tree_preds = np.array([tree.predict(X_transformed) for tree in model.named_steps["randomforestregressor"].estimators_])
+    tree_preds = np.array([tree.predict(model.named_steps["pipeline"].transform(x)) for tree in model.named_steps["randomforestregressor"].estimators_])
 
     y_pred = tree_preds.mean(axis=0)[0]
-    y_std = tree_preds.std(axis=0)[0]
 
-    return max(0, 100 * (1- (y_std / y_pred))) if y_pred !=0 else 0.0
+    return max(0, 100 * (1- (tree_preds.std(axis=0)[0] / y_pred))) if y_pred !=0 else 0.0
 
 def download_model():
     comet_ml.login()
@@ -54,12 +51,9 @@ def create_app():
     @app.route("/predict", methods=["POST"])
     def get_model_prediction():
         x = pd.DataFrame([request.form])
-        prediction = model.predict(x)
-        confidence = calculate_confidence(model, x)
         return {
-            "prediction": round(prediction[0],2),
-            "confidence": round(confidence, 2)
+            "prediction": round(model.predict(x)[0],2),
+            "confidence": round(calculate_confidence(model,x), 2)
         }, 200
-
 
     return app
