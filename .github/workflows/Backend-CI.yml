@@ -12,6 +12,9 @@ on:
 permissions:
   contents: read
 
+env:
+  COMET_API_KEY: ${{secrets.COMET_API_KEY}}
+
 jobs:
   build:
 
