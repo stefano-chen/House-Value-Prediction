@@ -1,55 +1,35 @@
+import os
 import sys
 
 from flask import Flask, request
-import comet_ml
-import joblib
-from pathlib import Path
+
 import pandas as pd
-import numpy as np
 
-def download_model():
-    comet_ml.login()
+from pymongo.mongo_client import MongoClient
 
-    model_registry = comet_ml.API().get_model(
-        workspace=comet_ml.API().get_default_workspace(), model_name="HVP"
-    )
+from backend.classes.Model import Model
 
-    versions = model_registry.find_versions(status="Production")
-
-    if len(versions) == 0:
-        print("No model Found", file=sys.stderr)
-        sys.exit(-1)
-
-    model_registry.download(versions[0], output_folder=Path("./backend/model"))
-
-    model = joblib.load(Path("./backend/model/model-data/comet-sklearn-model.joblib"))
-
-    return model, versions[0]
-
-
-def calculate_confidence(model, x):
-    x_tranformed = model.named_steps["pipeline"].transform(x)
-    tree_preds = np.array([tree.predict(x_tranformed) for tree in model.named_steps["randomforestregressor"].estimators_])
-
-    y_pred = tree_preds.mean(axis=0)[0]
-
-    return max(0, 100 * (1- (tree_preds.std(axis=0)[0] / y_pred))) if y_pred !=0 else 0.0
-
-
-def extract_feature_from_request(body, features_names):
+def extract_feature_from_request(body):
+    features_names = ["Median_Income", "Median_Age", "Population", "Households", "Latitude", "Longitude",
+                      "Distance_to_coast", "Distance_to_LA", "Distance_to_SanDiego", "Distance_to_SanJose",
+                      "Distance_to_SanFrancisco", "Rooms_Per_House", "Bedrooms_Ratio", "People_Per_House"]
     x = {}
     for feature_name in features_names:
         x[feature_name] = body[feature_name] if feature_name in body else None
 
-    return pd.DataFrame([x])
+    return pd.DataFrame([x]), x
 
-def create_app():
+def create_app(testing=False):
 
-    model, version = download_model()
+    # mongo_uri = os.environ["MONGODB_URI"]
+    #
+    # mongo_client = MongoClient(mongo_uri)
+    # mongo_db = mongo_client["HVP"]
+    # mongo_collection = mongo_db["Houses"]
 
-    features_names = ["Median_Income", "Median_Age", "Population", "Households", "Latitude", "Longitude",
-                     "Distance_to_coast", "Distance_to_LA", "Distance_to_SanDiego", "Distance_to_SanJose",
-                     "Distance_to_SanFrancisco", "Rooms_Per_House", "Bedrooms_Ratio", "People_Per_House"]
+    model = Model()
+    if not testing:
+        model.download_model()
 
     app = Flask(__name__)
 
@@ -59,14 +39,16 @@ def create_app():
 
     @app.route("/version", methods=["GET"])
     def get_model_version():
-        return {"version": version}, 200
+        return {"version": model.get_version()}, 200
 
     @app.route("/predict", methods=["POST"])
     def get_model_prediction():
-        x = extract_feature_from_request(request.form, features_names)
+        x_df, x_dict = extract_feature_from_request(request.form)
+        x_dict["Prediction"], x_dict["Confidence"] = model.predict(x_df)
+        # mongo_collection.insert_one(x)
         return {
-            "prediction": round(model.predict(x)[0],2),
-            "confidence": round(calculate_confidence(model,x), 2)
+            "prediction": x_dict["Prediction"],
+            "confidence": x_dict["Confidence"]
         }, 200
 
     return app

@@ -1,5 +1,3 @@
-from flask import request
-
 def test_version_request(client):
     response = client.get("/version")
     assert "version" in response.get_json()
