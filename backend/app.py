@@ -7,13 +7,6 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
-def calculate_confidence(model, x):
-    tree_preds = np.array([tree.predict(model.named_steps["pipeline"].transform(x)) for tree in model.named_steps["randomforestregressor"].estimators_])
-
-    y_pred = tree_preds.mean(axis=0)[0]
-
-    return max(0, 100 * (1- (tree_preds.std(axis=0)[0] / y_pred))) if y_pred !=0 else 0.0
-
 def download_model():
     comet_ml.login()
 
@@ -34,9 +27,29 @@ def download_model():
     return model, versions[0]
 
 
+def calculate_confidence(model, x):
+    x_tranformed = model.named_steps["pipeline"].transform(x)
+    tree_preds = np.array([tree.predict(x_tranformed) for tree in model.named_steps["randomforestregressor"].estimators_])
+
+    y_pred = tree_preds.mean(axis=0)[0]
+
+    return max(0, 100 * (1- (tree_preds.std(axis=0)[0] / y_pred))) if y_pred !=0 else 0.0
+
+
+def extract_feature_from_request(body, features_names):
+    x = {}
+    for feature_name in features_names:
+        x[feature_name] = body[feature_name] if feature_name in body else None
+
+    return pd.DataFrame([x])
+
 def create_app():
 
     model, version = download_model()
+
+    features_names = ["Median_Income", "Median_Age", "Population", "Households", "Latitude", "Longitude",
+                     "Distance_to_coast", "Distance_to_LA", "Distance_to_SanDiego", "Distance_to_SanJose",
+                     "Distance_to_SanFrancisco", "Rooms_Per_House", "Bedrooms_Ratio", "People_Per_House"]
 
     app = Flask(__name__)
 
@@ -50,7 +63,7 @@ def create_app():
 
     @app.route("/predict", methods=["POST"])
     def get_model_prediction():
-        x = pd.DataFrame([request.form])
+        x = extract_feature_from_request(request.form, features_names)
         return {
             "prediction": round(model.predict(x)[0],2),
             "confidence": round(calculate_confidence(model,x), 2)
