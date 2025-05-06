@@ -1,6 +1,6 @@
 import sys
 
-from pymongo.mongo_client import MongoClient
+from pymongo.mongo_client import MongoClient, ConnectionFailure
 import os
 
 class MongoDB:
@@ -16,6 +16,13 @@ class MongoDB:
             print("Missing MONGODB_URI environment variable", file=sys.stderr)
             sys.exit(-1)
         self._client = MongoClient(self._uri)
+
+        try:
+            # The ping command is cheap and does not require auth.
+            print(self._uri, file=sys.stderr)
+            self._client.admin.command('ping')
+        except ConnectionFailure:
+            print("Server not available", file=sys.stderr)
 
 
     def insert_one(self, database_name, collection_name, data):
