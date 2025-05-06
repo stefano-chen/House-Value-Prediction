@@ -2,8 +2,8 @@ from flask import Flask, request
 
 import pandas as pd
 
-from backend.classes.Model import Model
-from backend.classes.MongoDB import MongoDB
+from classes.Model import Model
+from classes.MongoDB import MongoDB
 
 
 def extract_feature_from_request(body):
@@ -45,3 +45,7 @@ def create_app(testing=False):
         }, 200
 
     return app
+
+if __name__ == "__main__":
+    app = create_app()
+    app.run()
