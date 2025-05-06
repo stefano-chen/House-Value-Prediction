@@ -2,8 +2,8 @@ from flask import Flask, request
 
 import pandas as pd
 
-from classes.Model import Model
-from classes.MongoDB import MongoDB
+from .classes.Model import Model
+from .classes.MongoDB import MongoDB
 
 
 def extract_feature_from_request(body):
