@@ -63,7 +63,6 @@ with st.form(key='prediction_form', enter_to_submit=False):
     submit = st.form_submit_button("Predict Value")
 
 if submit:
-
     if not check_form_fields(form_state, address):
         st.error("Form not filled")
     else:

@@ -1,6 +1,8 @@
 import requests
 import numpy as np
 import streamlit as st
+import pandas as pd
+from pathlib import Path
 
 
 def get_lat_lon(street, city, state, country, postalcode):
@@ -32,9 +34,21 @@ def calculate_haversine_distance(lat1_deg, lon1_deg, lat2_deg, lon2_deg):
         )
     )
 
-def calculate_distance_to_cities(lat1_deg, lon1_deg):
-    distance_to_sanfrancisco = calculate_haversine_distance(lat1_deg, lon1_deg, 37.773972, -122.431297)
-    distance_to_la = calculate_haversine_distance(lat1_deg, lon1_deg, 34.052235, -118.243683)
-    distance_to_sandiego = calculate_haversine_distance(lat1_deg, lon1_deg, 32.715736, -117.161087)
-    distance_to_sanjose = calculate_haversine_distance(lat1_deg, lon1_deg, 37.335480, -121.893028)
+def calculate_distance_to_cities(lat_deg, lon_deg):
+    distance_to_sanfrancisco = calculate_haversine_distance(lat_deg, lon_deg, 37.773972, -122.431297)
+    distance_to_la = calculate_haversine_distance(lat_deg, lon_deg, 34.052235, -118.243683)
+    distance_to_sandiego = calculate_haversine_distance(lat_deg, lon_deg, 32.715736, -117.161087)
+    distance_to_sanjose = calculate_haversine_distance(lat_deg, lon_deg, 37.335480, -121.893028)
     return [distance_to_la, distance_to_sandiego, distance_to_sanjose, distance_to_sanfrancisco]
+
+def calculate_distante_to_coast(lat_deg, lon_deg):
+    print(Path.cwd())
+    beaches = pd.read_csv(Path("beach/California_Beach.csv"))
+    min_distance = np.inf
+
+    for index, row in beaches.iterrows():
+        curr_distance = calculate_haversine_distance(lat_deg, lon_deg, row["latitude"], row["longitude"])
+        if curr_distance < min_distance:
+            min_distance = curr_distance
+
+    return min_distance
