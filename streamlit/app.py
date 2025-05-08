@@ -38,6 +38,14 @@ def calculate_haversine_distance(lat1_deg, lon1_deg, lat2_deg, lon2_deg):
         )
     )
 
+def calculate_distance_to_cities(lat1_deg, lon1_deg):
+    distance_to_sanfrancisco = calculate_haversine_distance(lat1_deg, lon1_deg, 37.773972, -122.431297)
+    distance_to_la = calculate_haversine_distance(lat1_deg, lon1_deg, 34.052235, -118.243683)
+    distance_to_sandiego = calculate_haversine_distance(lat1_deg, lon1_deg, 32.715736, -117.161087)
+    distance_to_sanjose = calculate_haversine_distance(lat1_deg, lon1_deg, 37.335480, -121.893028)
+    return [distance_to_la, distance_to_sandiego, distance_to_sanjose, distance_to_sanfrancisco]
+
+
 def check_form_fields(form: dict) -> bool:
     for key in form.keys():
         if isinstance(form[key], str):
@@ -99,10 +107,11 @@ if submit:
 
         if lat is None or lon is None:
             st.error("Address not Found")
+        else:
 
-        predicted_value = 0
+            predicted_value = 0
 
-        st.success(f"🏠 Estimated House Value: **${predicted_value:,.2f}**")
+            st.success(f"🏠 Estimated House Value: **${predicted_value:,.2f}**")
 
 # About the model
 st.markdown("---")
