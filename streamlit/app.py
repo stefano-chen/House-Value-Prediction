@@ -1,9 +1,4 @@
-from turtledemo.sorting_animate import start_ssort
-
 import streamlit as st
-import requests
-import numpy as np
-
 from geo import utils
 
 comet_key = st.secrets["COMET_API_KEY"]

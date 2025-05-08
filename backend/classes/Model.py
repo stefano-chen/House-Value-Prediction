@@ -1,9 +1,11 @@
 import sys
+import tempfile
+from pathlib import Path
+
 import comet_ml
 import joblib
-from pathlib import Path
 import numpy as np
-import tempfile
+
 
 class Model:
 

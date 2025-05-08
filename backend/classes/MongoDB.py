@@ -1,7 +1,8 @@
+import os
 import sys
 
 from pymongo.mongo_client import MongoClient, ConnectionFailure
-import os
+
 
 class MongoDB:
 

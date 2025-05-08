@@ -1,6 +1,5 @@
-from flask import Flask, request
-
 import pandas as pd
+from flask import Flask, request
 
 from .classes.Model import Model
 from .classes.MongoDB import MongoDB

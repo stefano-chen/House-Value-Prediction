@@ -1,8 +1,9 @@
-import requests
-import numpy as np
-import streamlit as st
-import pandas as pd
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import requests
+import streamlit as st
 
 
 def get_lat_lon(street, city, state, country, postalcode):
