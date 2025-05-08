@@ -2,6 +2,7 @@ from turtledemo.sorting_animate import start_ssort
 
 import streamlit as st
 import requests
+import numpy as np
 
 comet_key = st.secrets["COMET_API_KEY"]
 mongodb_uri = st.secrets["MONGODB_URI"]
@@ -20,8 +21,33 @@ def get_lat_lon(street, city, state, country, postalcode):
 
     data = response.json()
 
-    return data[0]["lat"], data[0]["lon"] if len(data) > 0 else None,None
+    return (data[0]["lat"], data[0]["lon"]) if len(data) > 0 else (None,None)
 
+def calculate_haversine_distance(lat1_deg, lon1_deg, lat2_deg, lon2_deg):
+    r = 6371000
+
+    lat1 = np.radians(lat1_deg)
+    lon1 = np.radians(lon1_deg)
+    lat2 = np.radians(lat2_deg)
+    lon2 = np.radians(lon2_deg)
+
+    return 2*r*np.arcsin(
+        np.sqrt(
+            np.square(np.sin((lat2-lat1)/2)) +
+            np.cos(lat1) * np.cos(lat2) * np.square(np.sin((lon2-lon1)/2))
+        )
+    )
+
+def check_form_fields(form: dict) -> bool:
+    for key in form.keys():
+        if isinstance(form[key], str):
+            if form[key] == "":
+                return False
+        elif isinstance(form[key], (int,float)):
+            if form[key] == 0:
+                return False
+
+    return True
 
 # Page Config
 st.set_page_config(page_title="House Value Predictor", layout="centered")
@@ -46,28 +72,37 @@ with st.form(key='prediction_form', enter_to_submit=False):
     col1, col2 = st.columns(2)
 
     with col1:
-        form_state["street"] = st.text_input("Street", placeholder="7890 East San Pablo St.")
+        form_state["street"] = st.text_input("Street", placeholder="1510 San Pablo St")
         form_state["state"] = st.text_input("State", placeholder="CA")
-        form_state["postal_code"] = st.text_input("Postal Code", placeholder="90660")
-        median_income = st.number_input("Median Income in the Neighborhood (USD)", min_value=0.0, step=1000.0)
-        population = st.number_input("Population in the Neighborhood", min_value=0, step=1)
-        households = st.number_input("Households in the Neighborhood", min_value=0, step=1)
+        form_state["postal_code"] = st.text_input("Postal Code", placeholder="90033")
+        form_state["median_income"] = st.number_input("Median Income in the Neighborhood (USD)", min_value=0.0, step=1000.0)
+        form_state["population"] = st.number_input("Population in the Neighborhood", min_value=0, step=1)
+        form_state["households"] = st.number_input("Households in the Neighborhood", min_value=0, step=1)
 
     with col2:
-        city = st.text_input("City", placeholder="Pico Rivera")
-        country = st.text_input("Country", placeholder="USA")
-        median_age = st.number_input("House Age", min_value=0, step=1)
-        n_rooms = st.number_input("Number of Rooms", min_value=0, step=1)
-        n_bedrooms = st.number_input("Number of Bedrooms", min_value=0, step=1)
-        people_per_house = st.number_input("People per House", min_value=0, step=1)
+        form_state["city"] = st.text_input("City", placeholder="Los Angeles")
+        form_state["country"] = st.text_input("Country", placeholder="USA")
+        form_state["median_age"] = st.number_input("House Age", min_value=0, step=1)
+        form_state["n_rooms"] = st.number_input("Number of Rooms", min_value=0, step=1)
+        form_state["n_bedrooms"] = st.number_input("Number of Bedrooms", min_value=0, step=1)
+        form_state["people_per_house"] = st.number_input("People per House", min_value=0, step=1)
 
     submit = st.form_submit_button("Predict Value")
 
 if submit:
 
-    predicted_value = 0
+    if not check_form_fields(form_state):
+        st.error("Form not filled")
+    else:
+        lat, lon = get_lat_lon(form_state["street"], form_state["city"], form_state["state"],
+                               form_state["country"],form_state["postal_code"])
 
-    st.success(f"🏠 Estimated House Value: **${predicted_value:,.2f}**")
+        if lat is None or lon is None:
+            st.error("Address not Found")
+
+        predicted_value = 0
+
+        st.success(f"🏠 Estimated House Value: **${predicted_value:,.2f}**")
 
 # About the model
 st.markdown("---")
