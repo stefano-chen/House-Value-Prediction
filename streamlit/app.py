@@ -4,56 +4,20 @@ import streamlit as st
 import requests
 import numpy as np
 
+from geo import utils
+
 comet_key = st.secrets["COMET_API_KEY"]
 mongodb_uri = st.secrets["MONGODB_URI"]
-maps_key = st.secrets["MAPS_API_KEY"]
 
 
-def get_lat_lon(street, city, state, country, postalcode):
-    response = requests.get("https://geocode.maps.co/search/", params={
-        "street": street,
-        "city": city,
-        "state": state,
-        "country": country,
-        "postalcode": postalcode,
-        "api_key": maps_key
-    })
-
-    data = response.json()
-
-    return (data[0]["lat"], data[0]["lon"]) if len(data) > 0 else (None,None)
-
-def calculate_haversine_distance(lat1_deg, lon1_deg, lat2_deg, lon2_deg):
-    r = 6371000
-
-    lat1 = np.radians(lat1_deg)
-    lon1 = np.radians(lon1_deg)
-    lat2 = np.radians(lat2_deg)
-    lon2 = np.radians(lon2_deg)
-
-    return 2*r*np.arcsin(
-        np.sqrt(
-            np.square(np.sin((lat2-lat1)/2)) +
-            np.cos(lat1) * np.cos(lat2) * np.square(np.sin((lon2-lon1)/2))
-        )
-    )
-
-def calculate_distance_to_cities(lat1_deg, lon1_deg):
-    distance_to_sanfrancisco = calculate_haversine_distance(lat1_deg, lon1_deg, 37.773972, -122.431297)
-    distance_to_la = calculate_haversine_distance(lat1_deg, lon1_deg, 34.052235, -118.243683)
-    distance_to_sandiego = calculate_haversine_distance(lat1_deg, lon1_deg, 32.715736, -117.161087)
-    distance_to_sanjose = calculate_haversine_distance(lat1_deg, lon1_deg, 37.335480, -121.893028)
-    return [distance_to_la, distance_to_sandiego, distance_to_sanjose, distance_to_sanfrancisco]
-
-
-def check_form_fields(form: dict) -> bool:
+def check_form_fields(form: dict, address: dict) -> bool:
     for key in form.keys():
-        if isinstance(form[key], str):
-            if form[key] == "":
-                return False
-        elif isinstance(form[key], (int,float)):
-            if form[key] == 0:
-                return False
+        if form[key] == 0:
+            return False
+
+    for key in address.keys():
+        if address[key] == "":
+            return False
 
     return True
 
@@ -77,33 +41,33 @@ st.markdown("### Enter Property Details")
 # Form for inputs
 with st.form(key='prediction_form', enter_to_submit=False):
     form_state = {}
+    address={}
     col1, col2 = st.columns(2)
 
     with col1:
-        form_state["street"] = st.text_input("Street", placeholder="1510 San Pablo St")
-        form_state["state"] = st.text_input("State", placeholder="CA")
-        form_state["postal_code"] = st.text_input("Postal Code", placeholder="90033")
-        form_state["median_income"] = st.number_input("Median Income in the Neighborhood (USD)", min_value=0.0, step=1000.0)
-        form_state["population"] = st.number_input("Population in the Neighborhood", min_value=0, step=1)
-        form_state["households"] = st.number_input("Households in the Neighborhood", min_value=0, step=1)
+        address["street"] = st.text_input("Street", placeholder="1510 San Pablo St")
+        address["state"] = st.text_input("State", placeholder="CA")
+        address["postalcode"] = st.text_input("Postal Code", placeholder="90033")
+        form_state["Median_Income"] = st.number_input("Median Income in the Neighborhood (USD)", min_value=0.0, step=1000.0)
+        form_state["Population"] = st.number_input("Population in the Neighborhood", min_value=0, step=1)
+        form_state["Households"] = st.number_input("Households in the Neighborhood", min_value=0, step=1)
 
     with col2:
-        form_state["city"] = st.text_input("City", placeholder="Los Angeles")
-        form_state["country"] = st.text_input("Country", placeholder="USA")
-        form_state["median_age"] = st.number_input("House Age", min_value=0, step=1)
-        form_state["n_rooms"] = st.number_input("Number of Rooms", min_value=0, step=1)
-        form_state["n_bedrooms"] = st.number_input("Number of Bedrooms", min_value=0, step=1)
-        form_state["people_per_house"] = st.number_input("People per House", min_value=0, step=1)
+        address["city"] = st.text_input("City", placeholder="Los Angeles")
+        address["country"] = st.text_input("Country", placeholder="USA")
+        form_state["Median_Age"] = st.number_input("House Age", min_value=0, step=1)
+        form_state["Rooms_Per_House"] = st.number_input("Number of Rooms", min_value=0, step=1)
+        form_state["Bedrooms_Ratio"] = st.number_input("Number of Bedrooms", min_value=0, step=1)
+        form_state["People_Per_House"] = st.number_input("People per House", min_value=0, step=1)
 
     submit = st.form_submit_button("Predict Value")
 
 if submit:
 
-    if not check_form_fields(form_state):
+    if not check_form_fields(form_state, address):
         st.error("Form not filled")
     else:
-        lat, lon = get_lat_lon(form_state["street"], form_state["city"], form_state["state"],
-                               form_state["country"],form_state["postal_code"])
+        lat, lon = utils.get_lat_lon(**address)
 
         if lat is None or lon is None:
             st.error("Address not Found")
