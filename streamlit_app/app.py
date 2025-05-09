@@ -107,8 +107,9 @@ if submit:
         if lat is None or lon is None:
             st.error("Address not Found")
         else:
-            features = extract_features(form_state, lat, lon)
-            predicted_value, confidence = st.session_state.model.predict(features)
+            with st.spinner("Calculating, Please wait", show_time=True):
+                features = extract_features(form_state, lat, lon)
+                predicted_value, confidence = st.session_state.model.predict(features)
 
             st.success("🏠 Estimated House Value: {value:,.2f} USD with confidence: {conf:,.2f}%".format(value=predicted_value, conf=confidence))
 

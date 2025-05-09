@@ -33,3 +33,6 @@ jobs:
     - name: Backend Testing
       run: |
         pytest ./backend/tests
+    - name: Streamlit app Testing
+      run: |
+        pytest ./streamlit_app/tests
