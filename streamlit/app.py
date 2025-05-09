@@ -5,10 +5,6 @@ from pathlib import Path
 from classes.Model import Model
 from classes.MongoDB import MongoDB
 
-comet_key = st.secrets["COMET_API_KEY"]
-mongodb_uri = st.secrets["MONGODB_URI"]
-maps_key = st.secrets["MAPS_API_KEY"]
-
 def extract_features(form, latitude, longitude):
 
     coast_df = pd.read_csv(Path("beach/California_Beach.csv"))
@@ -54,6 +50,10 @@ def check_form_fields(form: dict, address: dict) -> bool:
 # Page Config
 st.set_page_config(page_title="House Value Predictor", layout="centered")
 
+comet_key = st.secrets["COMET_API_KEY"]
+mongodb_uri = st.secrets["MONGODB_URI"]
+maps_key = st.secrets["MAPS_API_KEY"]
+
 if "model" not in st.session_state:
     model = Model(comet_key)
 
@@ -78,20 +78,20 @@ st.markdown("### Enter Property Details")
 # Form for inputs
 with st.form(key='prediction_form', enter_to_submit=False):
     form_state = {}
-    address={}
+    form_address={}
     col1, col2 = st.columns(2)
 
     with col1:
-        address["street"] = st.text_input("Street", placeholder="1510 San Pablo St")
-        address["state"] = st.text_input("State", placeholder="CA")
-        address["postalcode"] = st.text_input("Postal Code", placeholder="90033")
+        form_address["street"] = st.text_input("Street", placeholder="1510 San Pablo St")
+        form_address["state"] = st.text_input("State", placeholder="CA")
+        form_address["postalcode"] = st.text_input("Postal Code", placeholder="90033")
         form_state["Median_Income"] = st.number_input("Median Income in the Neighborhood (USD)", min_value=0.0, step=1000.0)
         form_state["Population"] = st.number_input("Population in the Neighborhood", min_value=0, step=1)
         form_state["Households"] = st.number_input("Households in the Neighborhood", min_value=0, step=1)
 
     with col2:
-        address["city"] = st.text_input("City", placeholder="Los Angeles")
-        address["country"] = st.text_input("Country", placeholder="USA")
+        form_address["city"] = st.text_input("City", placeholder="Los Angeles")
+        form_address["country"] = st.text_input("Country", placeholder="USA")
         form_state["Median_Age"] = st.number_input("House Age", min_value=0, step=1)
         form_state["Rooms_Per_House"] = st.number_input("Number of Rooms", min_value=0, step=1)
         form_state["Bedrooms_Ratio"] = st.number_input("Number of Bedrooms", min_value=0, step=1)
@@ -100,10 +100,10 @@ with st.form(key='prediction_form', enter_to_submit=False):
     submit = st.form_submit_button("Predict Value")
 
 if submit:
-    if not check_form_fields(form_state, address):
+    if not check_form_fields(form_state, form_address):
         st.error("Form not filled")
     else:
-        lat, lon = utils.get_lat_lon(**address, api_key=maps_key)
+        lat, lon = utils.get_lat_lon(**form_address, api_key=maps_key)
         if lat is None or lon is None:
             st.error("Address not Found")
         else:
