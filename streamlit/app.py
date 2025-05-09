@@ -1,8 +1,42 @@
 import streamlit as st
 from geo import utils
+import pandas as pd
+from pathlib import Path
+from classes.Model import Model
+from classes.MongoDB import MongoDB
 
 comet_key = st.secrets["COMET_API_KEY"]
 mongodb_uri = st.secrets["MONGODB_URI"]
+maps_key = st.secrets["MAPS_API_KEY"]
+
+def extract_features(form, latitude, longitude):
+
+    coast_df = pd.read_csv(Path("beach/California_Beach.csv"))
+    coast_dist = utils.calculate_distante_to_coast(latitude, longitude, coast_df)
+
+    sanfrancisco, la, sandiego, sanjose = utils.calculate_distance_to_cities(latitude, longitude)
+
+    form["Median_Income"] /= 10000
+    form["Bedrooms_Ratio"] /= form["Rooms_Per_House"]
+
+    extracted_feature = {
+        "Median_Income": form["Median_Income"],
+        "Median_Age": form["Median_Age"],
+        "Population": form["Population"],
+        "Households": form["Households"],
+        "Latitude": latitude,
+        "Longitude": longitude,
+        "Distance_to_coast": coast_dist,
+        "Distance_to_LA": la,
+        "Distance_to_SanDiego": sandiego,
+        "Distance_to_SanJose": sanjose,
+        "Distance_to_SanFrancisco": sanfrancisco,
+        "Rooms_Per_House": form["Rooms_Per_House"],
+        "Bedrooms_Ratio": form["Bedrooms_Ratio"],
+        "People_Per_House": form["People_Per_House"]
+    }
+
+    return pd.DataFrame([extracted_feature])
 
 
 def check_form_fields(form: dict, address: dict) -> bool:
@@ -16,8 +50,16 @@ def check_form_fields(form: dict, address: dict) -> bool:
 
     return True
 
+
 # Page Config
 st.set_page_config(page_title="House Value Predictor", layout="centered")
+
+if "model" not in st.session_state:
+    model = Model(comet_key)
+
+    with st.spinner("Downloading Model, Please wait", show_time=True):
+        model.download_model("HVP")
+    st.session_state["model"] = model
 
 # Header
 st.markdown(
@@ -61,26 +103,25 @@ if submit:
     if not check_form_fields(form_state, address):
         st.error("Form not filled")
     else:
-        lat, lon = utils.get_lat_lon(**address)
-
+        lat, lon = utils.get_lat_lon(**address, api_key=maps_key)
         if lat is None or lon is None:
             st.error("Address not Found")
         else:
+            features = extract_features(form_state, lat, lon)
+            predicted_value, confidence = st.session_state.model.predict(features)
 
-            predicted_value = 0
-
-            st.success(f"🏠 Estimated House Value: **${predicted_value:,.2f}**")
+            st.success("🏠 Estimated House Value: {value:,.2f} USD with confidence: {conf:,.2f}%".format(value=predicted_value, conf=confidence))
 
 # About the model
 st.markdown("---")
 st.markdown("### 📈 About the Model")
 st.markdown(
     """
-    This model uses machine learning to estimate the market value of a house.
-    It considers various features like:
+    This model uses machine learning to estimate the market value of a house located in California.
+    It considers various features such as:
 
-    - **Area** of the property in square feet
-    - Number of **bedrooms** and **bathrooms**
+    - **Neighborhood** well-being
+    - Number of **rooms** and **bedrooms**
     - **Location** (e.g., city or zip code)
 
     """

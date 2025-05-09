@@ -10,9 +10,9 @@ class MongoDB:
         self._uri = None
         self._client = None
 
-    def connect(self):
+    def connect(self, uri):
         try:
-            self._uri = os.environ["MONGODB_URI"]
+            self._uri = uri
         except KeyError:
             print("Missing MONGODB_URI environment variable", file=sys.stderr)
             sys.exit(-1)

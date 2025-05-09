@@ -1,24 +1,20 @@
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
 import requests
-import streamlit as st
 
-
-def get_lat_lon(street, city, state, country, postalcode):
+def get_lat_lon(street, city, state, country, postalcode, api_key):
     response = requests.get("https://geocode.maps.co/search/", params={
         "street": street,
         "city": city,
         "state": state,
         "country": country,
         "postalcode": postalcode,
-        "api_key": st.secrets["MAPS_API_KEY"]
+        "api_key": api_key
     })
 
     data = response.json()
 
-    return (data[0]["lat"], data[0]["lon"]) if len(data) > 0 else (None,None)
+    return (float(data[0]["lat"]), float(data[0]["lon"])) if len(data) > 0 else (None,None)
 
 def calculate_haversine_distance(lat1_deg, lon1_deg, lat2_deg, lon2_deg):
     r = 6371000
@@ -36,18 +32,24 @@ def calculate_haversine_distance(lat1_deg, lon1_deg, lat2_deg, lon2_deg):
     )
 
 def calculate_distance_to_cities(lat_deg, lon_deg):
-    distance_to_sanfrancisco = calculate_haversine_distance(lat_deg, lon_deg, 37.773972, -122.431297)
-    distance_to_la = calculate_haversine_distance(lat_deg, lon_deg, 34.052235, -118.243683)
-    distance_to_sandiego = calculate_haversine_distance(lat_deg, lon_deg, 32.715736, -117.161087)
-    distance_to_sanjose = calculate_haversine_distance(lat_deg, lon_deg, 37.335480, -121.893028)
-    return [distance_to_la, distance_to_sandiego, distance_to_sanjose, distance_to_sanfrancisco]
 
-def calculate_distante_to_coast(lat_deg, lon_deg):
-    print(Path.cwd())
-    beaches = pd.read_csv(Path("beach/California_Beach.csv"))
+    cities = {
+        "sanfrancisco": [37.773972, -122.431297],
+        "la": [34.052235, -118.243683],
+        "sandiego": [32.715736, -117.161087],
+        "sanjose":[37.335480, -121.893028]
+    }
+
+    distances = []
+
+    for city, coord in cities.items():
+        distances.append(calculate_haversine_distance(lat_deg, lon_deg, coord[0], coord[1]))
+
+    return distances
+
+def calculate_distante_to_coast(lat_deg, lon_deg, coast_coord: pd.DataFrame):
     min_distance = np.inf
-
-    for index, row in beaches.iterrows():
+    for index, row in coast_coord.iterrows():
         curr_distance = calculate_haversine_distance(lat_deg, lon_deg, row["latitude"], row["longitude"])
         if curr_distance < min_distance:
             min_distance = curr_distance
