@@ -1,32 +1,29 @@
-import os
 import sys
 
 from pymongo.mongo_client import MongoClient, ConnectionFailure
 
 
-class MongoDB:
+class MongoDBLogger:
 
-    def __init__(self):
-        self._uri = None
+    def __init__(self, uri):
+        self._uri = uri
         self._client = None
 
-    def connect(self, uri):
-        try:
-            self._uri = uri
-        except KeyError:
-            print("Missing MONGODB_URI environment variable", file=sys.stderr)
-            sys.exit(-1)
+    def connect(self):
         self._client = MongoClient(self._uri)
 
         try:
             # The ping command is cheap and does not require auth.
             self._client.admin.command('ping')
         except ConnectionFailure:
-            print("Database not available", file=sys.stderr)
-            sys.exit(-1)
+            print("Connection Error", file=sys.stderr)
 
 
-    def insert_one(self, database_name, collection_name, data):
+    def log(self, database_name, collection_name, data):
         if self._client is None:
-            return None
+            raise RuntimeError("No Connection Available")
         return self._client[database_name][collection_name].insert_one(data)
+
+    def close(self):
+        if self._client is not None:
+            self._client.close()

@@ -1,9 +1,12 @@
+import sys
+from datetime import datetime, timezone
+
 import streamlit as st
 from geo import utils
 import pandas as pd
 from pathlib import Path
 from classes.Model import Model
-from classes.MongoDB import MongoDB
+from classes.MongoDB import MongoDBLogger
 
 def extract_features(form, latitude, longitude):
 
@@ -15,7 +18,7 @@ def extract_features(form, latitude, longitude):
     form["Median_Income"] /= 10000
     form["Bedrooms_Ratio"] /= form["Rooms_Per_House"]
 
-    extracted_feature = {
+    return {
         "Median_Income": form["Median_Income"],
         "Median_Age": form["Median_Age"],
         "Population": form["Population"],
@@ -32,9 +35,6 @@ def extract_features(form, latitude, longitude):
         "People_Per_House": form["People_Per_House"]
     }
 
-    return pd.DataFrame([extracted_feature])
-
-
 def check_form_fields(form: dict, address: dict) -> bool:
     for key in form.keys():
         if form[key] == 0:
@@ -46,6 +46,34 @@ def check_form_fields(form: dict, address: dict) -> bool:
 
     return True
 
+def create_prediction_info(model, in_features, prediction_value, confidence_value):
+
+    log_info = dict(in_features)
+
+    log_info["Prediction"] = prediction_value
+    log_info["Confidence"] = confidence_value
+    log_info["Model_Version"] = model.get_version()
+    log_info["Date"] = datetime.now(timezone.utc).isoformat()
+
+    return log_info
+
+def log_prediction(info):
+    mongo_logger = MongoDBLogger(mongodb_uri)
+    mongo_logger.connect()
+    try:
+        mongo_logger.log("HVP", "predictions", info)
+    except RuntimeError as error:
+        print(f"Logging Error:{error}", file=sys.stderr)
+    finally:
+        mongo_logger.close()
+
+def load_model():
+    if "model" not in st.session_state:
+        model = Model(comet_key)
+
+        with st.spinner("Downloading Model, Please wait", show_time=True):
+            model.download_model("HVP")
+        st.session_state["model"] = model
 
 # Page Config
 st.set_page_config(page_title="House Value Predictor", layout="centered")
@@ -54,12 +82,7 @@ comet_key = st.secrets["COMET_API_KEY"]
 mongodb_uri = st.secrets["MONGODB_URI"]
 maps_key = st.secrets["MAPS_API_KEY"]
 
-if "model" not in st.session_state:
-    model = Model(comet_key)
 
-    with st.spinner("Downloading Model, Please wait", show_time=True):
-        model.download_model("HVP")
-    st.session_state["model"] = model
 
 # Header
 st.markdown(
@@ -96,7 +119,6 @@ with st.form(key='prediction_form', enter_to_submit=False):
         form_state["Rooms_Per_House"] = st.number_input("Number of Rooms", min_value=0, step=1)
         form_state["Bedrooms_Ratio"] = st.number_input("Number of Bedrooms", min_value=0, step=1)
         form_state["People_Per_House"] = st.number_input("People per House", min_value=0, step=1)
-
     submit = st.form_submit_button("Predict Value")
 
 if submit:
@@ -109,7 +131,9 @@ if submit:
         else:
             with st.spinner("Calculating, Please wait", show_time=True):
                 features = extract_features(form_state, lat, lon)
-                predicted_value, confidence = st.session_state.model.predict(features)
+                predicted_value, confidence = st.session_state.model.predict(pd.DataFrame([features]))
+                prediction_info = create_prediction_info(st.session_state["model"], features, predicted_value, confidence)
+                log_prediction(prediction_info)
 
             st.success("🏠 Estimated House Value: {value:,.2f} USD with confidence: {conf:,.2f}%".format(value=predicted_value, conf=confidence))
 

@@ -29,7 +29,7 @@ class Model:
 
         if len(self._versions) == 0:
             print("No model Found", file=sys.stderr)
-            sys.exit(-1)
+            raise ValueError("Invalid model name")
 
         with tempfile.TemporaryDirectory() as tempdir:
             tempdir_path = Path(tempdir)
@@ -52,7 +52,7 @@ class Model:
 
     def predict(self, x: pandas.DataFrame):
         if self._model is None:
-            return -1,-1
+            raise RuntimeError("model not available for prediction")
         prediction = round(self._model.predict(x)[0],2)
         confidence = round(self._calculate_confidence(x),2)
 
