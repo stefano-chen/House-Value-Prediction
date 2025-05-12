@@ -13,6 +13,7 @@ from geo import utils
 # Functions declarations
 
 def extract_features(form, latitude, longitude):
+    print(Path.cwd())
     coast_df = pd.read_csv(Path("beach/California_Beach.csv"))
     coast_dist = utils.calculate_distance_to_coast(latitude, longitude, coast_df)
 
