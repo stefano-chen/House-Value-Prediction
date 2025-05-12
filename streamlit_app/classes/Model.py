@@ -53,7 +53,7 @@ class Model:
     def predict(self, x: pandas.DataFrame):
         if self._model is None:
             raise RuntimeError("model not available for prediction")
-        prediction = round(self._model.predict(x)[0],2)
-        confidence = round(self._calculate_confidence(x),2)
+        prediction = round(self._model.predict(x)[0], 2)
+        confidence = round(self._calculate_confidence(x), 2)
 
         return prediction, confidence

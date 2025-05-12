@@ -1,17 +1,20 @@
 import sys
 from datetime import datetime, timezone
-
-import streamlit as st
-from geo import utils
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
+import streamlit as st
+
 from classes.Model import Model
 from classes.MongoDB import MongoDBLogger
+from geo import utils
+
+
+# Functions declarations
 
 def extract_features(form, latitude, longitude):
-
     coast_df = pd.read_csv(Path("beach/California_Beach.csv"))
-    coast_dist = utils.calculate_distante_to_coast(latitude, longitude, coast_df)
+    coast_dist = utils.calculate_distance_to_coast(latitude, longitude, coast_df)
 
     sanfrancisco, la, sandiego, sanjose = utils.calculate_distance_to_cities(latitude, longitude)
 
@@ -35,6 +38,7 @@ def extract_features(form, latitude, longitude):
         "People_Per_House": form["People_Per_House"]
     }
 
+
 def check_form_fields(form: dict, address: dict) -> bool:
     for key in form.keys():
         if form[key] == 0:
@@ -46,8 +50,8 @@ def check_form_fields(form: dict, address: dict) -> bool:
 
     return True
 
-def create_prediction_info(model, in_features, prediction_value, confidence_value):
 
+def create_prediction_info(model, in_features, prediction_value, confidence_value):
     log_info = dict(in_features)
 
     log_info["Prediction"] = prediction_value
@@ -56,6 +60,7 @@ def create_prediction_info(model, in_features, prediction_value, confidence_valu
     log_info["Date"] = datetime.now(timezone.utc).isoformat()
 
     return log_info
+
 
 def log_prediction(info):
     mongo_logger = MongoDBLogger(mongodb_uri)
@@ -67,6 +72,7 @@ def log_prediction(info):
     finally:
         mongo_logger.close()
 
+
 def load_model():
     if "model" not in st.session_state:
         model = Model(comet_key)
@@ -75,6 +81,7 @@ def load_model():
             model.download_model("HVP")
         st.session_state["model"] = model
 
+
 # Page Config
 st.set_page_config(page_title="House Value Predictor", layout="centered")
 
@@ -82,7 +89,7 @@ comet_key = st.secrets["COMET_API_KEY"]
 mongodb_uri = st.secrets["MONGODB_URI"]
 maps_key = st.secrets["MAPS_API_KEY"]
 
-
+load_model()
 
 # Header
 st.markdown(
@@ -97,18 +104,18 @@ st.markdown(
 
 st.markdown("### Enter Property Details")
 
-
 # Form for inputs
 with st.form(key='prediction_form', enter_to_submit=False):
     form_state = {}
-    form_address={}
+    form_address = {}
     col1, col2 = st.columns(2)
 
     with col1:
         form_address["street"] = st.text_input("Street", placeholder="1510 San Pablo St")
         form_address["state"] = st.text_input("State", placeholder="CA")
         form_address["postalcode"] = st.text_input("Postal Code", placeholder="90033")
-        form_state["Median_Income"] = st.number_input("Median Income in the Neighborhood (USD)", min_value=0.0, step=1000.0)
+        form_state["Median_Income"] = st.number_input("Median Income in the Neighborhood (USD)", min_value=0.0,
+                                                      step=1000.0)
         form_state["Population"] = st.number_input("Population in the Neighborhood", min_value=0, step=1)
         form_state["Households"] = st.number_input("Households in the Neighborhood", min_value=0, step=1)
 
@@ -132,10 +139,13 @@ if submit:
             with st.spinner("Calculating, Please wait", show_time=True):
                 features = extract_features(form_state, lat, lon)
                 predicted_value, confidence = st.session_state.model.predict(pd.DataFrame([features]))
-                prediction_info = create_prediction_info(st.session_state["model"], features, predicted_value, confidence)
+                prediction_info = create_prediction_info(st.session_state["model"], features, predicted_value,
+                                                         confidence)
                 log_prediction(prediction_info)
 
-            st.success("🏠 Estimated House Value: {value:,.2f} USD with confidence: {conf:,.2f}%".format(value=predicted_value, conf=confidence))
+            st.success(
+                "🏠 Estimated House Value: {value:,.2f} USD with confidence: {conf:,.2f}%".format(value=predicted_value,
+                                                                                                 conf=confidence))
 
 # About the model
 st.markdown("---")

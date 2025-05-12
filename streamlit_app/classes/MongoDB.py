@@ -18,7 +18,6 @@ class MongoDBLogger:
         except ConnectionFailure:
             print("Connection Error", file=sys.stderr)
 
-
     def log(self, database_name, collection_name, data):
         if self._client is None:
             raise RuntimeError("No Connection Available")
