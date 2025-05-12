@@ -66,9 +66,10 @@ def log_prediction(info):
     mongo_logger = MongoDBLogger(mongodb_uri)
     mongo_logger.connect()
     try:
-        mongo_logger.log("HVP", "predictions", info)
+        return mongo_logger.log("HVP", "predictions", info)
     except RuntimeError as error:
         print(f"Logging Error:{error}", file=sys.stderr)
+        return None
     finally:
         mongo_logger.close()
 
