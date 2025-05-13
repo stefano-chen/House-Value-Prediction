@@ -9,6 +9,22 @@ from pathlib import Path
 import shutil
 import pandas as pd
 from data_preprocessing import get_preprocessing_pipeline, perform_feature_engineering
+import argparse
+
+
+parser = argparse.ArgumentParser(description="this scripts is used to hyperparameter tuning and training Random Forest Regressor and save them to CometML")
+parser.add_argument("artifact_name", help="the name of a CometML dataset artifact used for the training, only the latest version is used")
+parser.add_argument("target_column", help="the name of the target column (the column containing the values to predict)")
+parser.add_argument("model_name", help="the name used to save the trained models")
+parser.add_argument("-p","--project_name", help="the project name, if does not exists it will create a new one with the given name if not provided the experiment will be saved in the Uncategorized Experiments")
+parser.add_argument("-n", "--n_trials", help="the number of trials of hyperparameters turning [default=100]", type=int, default=100)
+args = parser.parse_args()
+
+
+project_name = args.project_name if args.project_name else ""
+artifact_name = args.artifact_name
+target_column = args.target_column
+n_trials = args.n_trials
 
 comet_ml.login()
 
@@ -19,10 +35,10 @@ if not artifact_path.exists():
     artifact_path.mkdir(exist_ok=True)
 
 def objective(trial):
-    experiment = comet_ml.start(project_name="HVP")
+    experiment = comet_ml.start(project_name=project_name, experiment_config=comet_ml.ExperimentConfig(auto_param_logging=False))
     experiment.add_tag("tuning")
 
-    artifact = experiment.get_artifact("California_Houses", version_or_alias="latest")
+    artifact = experiment.get_artifact(artifact_name)
 
     artifact.download(artifact_path, overwrite_strategy="PRESERVE")
 
@@ -30,8 +46,8 @@ def objective(trial):
 
     dataset = perform_feature_engineering(df)
 
-    X = dataset.drop(columns=["Median_House_Value"], inplace=False)
-    Y = dataset["Median_House_Value"]
+    X = dataset.drop(columns=[target_column], inplace=False)
+    Y = dataset[target_column]
 
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42, shuffle=True)
 
@@ -66,6 +82,6 @@ def objective(trial):
     return rmse, mae, mape, r2
 
 study = optuna.create_study(directions=["minimize", "minimize", "minimize", "maximize"])
-study.optimize(objective, n_trials=100)
+study.optimize(objective, n_trials=n_trials)
 
 shutil.rmtree(artifact_path)
