@@ -30,7 +30,7 @@ comet_ml.login()
 
 preprocessing_pipeline = get_preprocessing_pipeline()
 
-artifact_path = Path("../artifacts")
+artifact_path = Path("./artifacts")
 if not artifact_path.exists():
     artifact_path.mkdir(exist_ok=True)
 
@@ -42,9 +42,8 @@ def objective(trial):
 
     artifact.download(artifact_path, overwrite_strategy="PRESERVE")
 
-    df = pd.read_csv(artifact_path.joinpath(f"{artifact.name}.csv"))
+    dataset = pd.read_csv(artifact_path.joinpath(f"{artifact.assets[0].logical_path}"))
 
-    dataset = perform_feature_engineering(df)
 
     X = dataset.drop(columns=[target_column], inplace=False)
     Y = dataset[target_column]
