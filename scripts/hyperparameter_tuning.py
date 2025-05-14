@@ -8,7 +8,7 @@ import optuna
 from pathlib import Path
 import shutil
 import pandas as pd
-from data_preprocessing import get_preprocessing_pipeline, perform_feature_engineering
+from data_preprocessing import get_preprocessing_pipeline
 import argparse
 
 
