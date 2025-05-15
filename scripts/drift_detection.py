@@ -50,4 +50,11 @@ result = data_drift_report.run(reference_data=reference_data, current_data=new_d
 
 n_drifted_col = result["metrics"][0]["value"]["count"]
 
-print(n_drifted_col, file=sys.stdout)
+if n_drifted_col > 0:
+    print("Data drift detected. Retraining the model", file=sys.stdout)
+    with open("drift_detected.txt", "w") as f:
+        f.write("drift_detected")
+else:
+    print("No data drift detected", file=sys.stdout)
+    with open("drift_detected.txt", "w") as f:
+        f.write("no_drift")

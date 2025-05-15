@@ -1,0 +1,56 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Monitoring and Alert for Data Drift Detection
+
+on:
+  workflow_dispatch:
+
+
+permissions:
+  contents: write
+
+env:
+  COMET_API_KEY: ${{secrets.COMET_API_KEY}}
+  MONGODB_URI: ${{secrets.MONGODB_URI}}
+  JIRA_KEY: ${{secrets.JIRA_KEY}}
+
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.12.6
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.12.6"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Run data drift detection
+      run: |
+        python scripts/drift_detection.py
+      continue-on-error: true
+
+    - name: Check for data drift
+      id: check_drift
+      run: |
+        if grep -q 'drift_detected' drift_detected.txt; then
+          echo "drift=true" >> $GITHUB_ENV
+        else
+          echo "drift=false" >> $GITHUB_ENV
+        fi
+      shell: bash
+
+    - name: Create JIRA bug ticket
+      if: env.drift == 'true'
+      run: |
+        python scripts/generate_alert.py
