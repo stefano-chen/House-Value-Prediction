@@ -8,8 +8,13 @@ from evidently.presets import DataDriftPreset
 from evidently import Report
 from pymongo.mongo_client import MongoClient, ConnectionFailure
 
+try:
+    mongo_uri = os.environ["MONGODB_URI"]
+except KeyError:
+    print("missing MONGODB_URI env variable", file=sys.stderr)
+    sys.exit(-1)
+
 comet_ml.login()
-mongo_uri = os.environ["MONGODB_URI"]
 
 client = MongoClient(mongo_uri)
 
@@ -22,8 +27,12 @@ except ConnectionFailure:
 
 documents = list(client['HVP']["predictions"].find())
 
+if len(documents) <=0:
+    print("no data in the database", file=sys.stderr)
+    sys.exit(-1)
+
 new_data = pd.DataFrame(documents)
-new_data.drop(columns=["_id", "Prediction", "Confidence", "Model_Version", "Date"], inplace=True)
+new_data.drop(columns=["_id", "Prediction", "Confidence", "Model_Version", "Date"], inplace=True, errors="ignore")
 
 experiment = comet_ml.start(project_name="HVP")
 experiment.add_tag("drift_check")
