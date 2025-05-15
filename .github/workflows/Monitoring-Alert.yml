@@ -5,7 +5,7 @@ name: Monitoring and Alert for Data Drift Detection
 
 on:
   schedule:
-    - cron: "0 0 1 * *" # run this workflow every first day of the month at 00:00
+    - cron: "0 0 1,16 * *" # run this workflow every first and sixteenth day for each month at 00:00
   workflow_dispatch:
 
 
