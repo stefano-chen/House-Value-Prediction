@@ -29,6 +29,11 @@ The Software Requirement Specification (SRS) document can be viewed [here](/docs
 
 The Exploratory Data Analysis can be viewed [here](/notebooks/eda/House-Value-Prediction-EDA.ipynb)
 
+# Report
+
+The project report can be found [here](/docs/report/Stefano_Chen_HVP.pdf)\
+The complementary project presentation can be found [here](/docs/report/Stefano_Chen_HVP_ppt.pdf)
+
 # Deployed App
 
 The deployed app is hosted on **Streamlit Community Cloud** at the following url:\
